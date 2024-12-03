@@ -4,12 +4,11 @@ import (
 	"GoGameApp/entity"
 	"database/sql"
 	"fmt"
-	"time"
 )
 
 func (d *MySQLDB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
 	user := entity.User{}
-	var createdAt time.Time
+	var createdAt []uint8
 
 	row := d.db.QueryRow(`select * from users where phone_number = ?`, phoneNumber)
 	err := row.Scan(&user.ID, &user.Name, &user.PhoneNumber, &createdAt)

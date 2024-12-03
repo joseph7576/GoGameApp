@@ -1,33 +1,60 @@
 package main
 
 import (
-	"GoGameApp/entity"
 	"GoGameApp/repository/mysql"
+	"GoGameApp/service/userservice"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 )
 
 func main() {
-	testUserMySQLRepo()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", healthCheckHandler)
+	mux.HandleFunc("/users/register", userRegisterHandler)
+
+	server := http.Server{Addr: ":8080", Handler: mux}
+	err := server.ListenAndServe()
+	if err != nil {
+		panic(err)
+	}
 }
 
-func testUserMySQLRepo() {
+func userRegisterHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		fmt.Fprint(w, `{ "error": "invalid method"}`)
+	}
+
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf(`{ "error": "%s"}`, err.Error())))
+
+		return
+	}
+
+	var req userservice.RegisterRequest
+	err = json.Unmarshal(data, &req)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf(`{ "error": "%s"}`, err.Error())))
+
+		return
+	}
+
 	mysqlRepo := mysql.New()
+	userSvc := userservice.New(mysqlRepo)
 
-	createdUser, err := mysqlRepo.CreateUser(entity.User{
-		ID:          0,
-		PhoneNumber: "09021650189",
-		Name:        "Test User 2",
-	})
+	_, err = userSvc.Register(req)
 	if err != nil {
-		fmt.Println("can't create user -> ", err)
-	} else {
-		fmt.Println("created user -> ", createdUser)
+		w.Write([]byte(fmt.Sprintf(`{ "error": "%s"}`, err.Error())))
+
+		return
 	}
 
-	isUnique, err := mysqlRepo.IsPhoneNumberUnique(createdUser.PhoneNumber + "13")
-	if err != nil {
-		fmt.Println("unique err", err)
-	}
+	w.Write([]byte(`{ "message": "user created" }`))
+}
 
-	fmt.Println("isUnique=", isUnique)
+func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, `{ "message": "All Good!"}`)
 }

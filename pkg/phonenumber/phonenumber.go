@@ -1,6 +1,8 @@
 package phonenumber
 
-import "strconv"
+import (
+	"strconv"
+)
 
 func IsValid(phoneNumber string) bool {
 	//TODO: - tech debt - we can use regex to support +98 phone code
@@ -8,7 +10,7 @@ func IsValid(phoneNumber string) bool {
 		return false
 	}
 
-	if phoneNumber[0:2] != "09" {
+	if phoneNumber[:2] != "09" {
 		return false
 	}
 

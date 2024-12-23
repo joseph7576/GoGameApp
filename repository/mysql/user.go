@@ -34,3 +34,20 @@ func (d *MySQLDB) CreateUser(u entity.User) (entity.User, error) {
 
 	return u, nil
 }
+
+func (d *MySQLDB) GetUserByPhoneNumber(phoneNumber string) (entity.User, bool, error) {
+	user := entity.User{}
+	var createdAt []uint8
+
+	row := d.db.QueryRow(`select * from users where phone_number = ?`, phoneNumber)
+	err := row.Scan(&user.ID, &user.Name, &user.PhoneNumber, &user.Password, &createdAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entity.User{}, false, nil
+		}
+
+		return entity.User{}, false, fmt.Errorf("can't scan query -> %w", err)
+	}
+
+	return user, true, nil
+}

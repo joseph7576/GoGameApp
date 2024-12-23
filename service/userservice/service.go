@@ -2,6 +2,7 @@ package userservice
 
 import (
 	"GoGameApp/entity"
+	"GoGameApp/pkg/password"
 	"GoGameApp/pkg/phonenumber"
 	"fmt"
 )
@@ -22,6 +23,7 @@ func New(repo Repository) Service {
 type RegisterRequest struct {
 	Name        string `json:"name"`
 	PhoneNumber string `json:"phone_number"`
+	Password    string `json:"password"`
 }
 
 type RegisterResponse struct {
@@ -52,11 +54,22 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 		return RegisterResponse{}, fmt.Errorf("name length should be greater than 3")
 	}
 
+	// validate password
+	if len(req.Password) < 8 {
+		return RegisterResponse{}, fmt.Errorf("password length should be greater than 8")
+	}
+
+	hashedPassword, err := password.HashPassword(req.Password)
+	if err != nil {
+		return RegisterResponse{}, fmt.Errorf("can't hash password -> %w", err)
+	}
+
 	// create new user in storage
 	user := entity.User{
 		ID:          0,
 		PhoneNumber: req.PhoneNumber,
 		Name:        req.Name,
+		Password:    hashedPassword,
 	}
 
 	createdUser, err := s.repo.CreateUser(user)
@@ -68,4 +81,16 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 	return RegisterResponse{
 		User: createdUser,
 	}, nil
+}
+
+type LoginRequest struct {
+	PhoneNumber string
+	Password    string
+}
+
+type LoginResponse struct {
+}
+
+func (s Service) Login(req LoginRequest) (LoginResponse, error) {
+	panic("implement me")
 }

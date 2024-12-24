@@ -35,9 +35,7 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
-	ID          uint   `json:"id"`
-	Name        string `json:"name"`
-	PhoneNumber string `json:"phone_number"`
+	User UserInfo `json:"user"`
 }
 
 func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
@@ -89,9 +87,11 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 
 	// return created user
 	return RegisterResponse{
-		ID:          createdUser.ID,
-		Name:        createdUser.Name,
-		PhoneNumber: createdUser.PhoneNumber,
+		User: UserInfo{
+			ID:          createdUser.ID,
+			Name:        createdUser.Name,
+			PhoneNumber: createdUser.PhoneNumber,
+		},
 	}, nil
 }
 
@@ -100,9 +100,20 @@ type LoginRequest struct {
 	Password    string `json:"password"`
 }
 
-type LoginResponse struct {
+type UserInfo struct {
+	ID          uint   `json:"id"`
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phone_number"`
+}
+
+type Tokens struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
+}
+
+type LoginResponse struct {
+	Tokens Tokens   `json:"tokens"`
+	User   UserInfo `json:"user"`
 }
 
 func (s Service) Login(req LoginRequest) (LoginResponse, error) {
@@ -132,7 +143,15 @@ func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 		return LoginResponse{}, fmt.Errorf("unexpected error: %w", err)
 	}
 
-	return LoginResponse{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+	return LoginResponse{
+		Tokens: Tokens{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken},
+		User: UserInfo{
+			ID:          user.ID,
+			Name:        user.Name,
+			PhoneNumber: user.PhoneNumber},
+	}, nil
 }
 
 type ProfileRequest struct {
@@ -140,7 +159,7 @@ type ProfileRequest struct {
 }
 
 type ProfileResponse struct {
-	Name string `json:"name"`
+	User UserInfo `json:"user"`
 }
 
 // all request inputs for interactor/service should be sanitized.
@@ -152,5 +171,9 @@ func (s Service) Profile(req ProfileRequest) (ProfileResponse, error) {
 		return ProfileResponse{}, fmt.Errorf("unexpected error: %w", err)
 	}
 
-	return ProfileResponse{Name: user.Name}, nil
+	return ProfileResponse{User: UserInfo{
+		ID:          user.ID,
+		Name:        user.Name,
+		PhoneNumber: user.PhoneNumber,
+	}}, nil
 }

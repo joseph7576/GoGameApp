@@ -1,0 +1,5 @@
+development:
+  dialect: mysql
+  datasource: root:root@(localhost:3306)/gameapp_local?parseTime=true
+  dir: repository/mysql/migrations
+  table: migrations

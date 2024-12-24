@@ -1,3 +1,4 @@
+-- +migrate Up
 CREATE TABLE users (
     id int primary key auto_increment,
     name varchar(255) not null,
@@ -5,3 +6,6 @@ CREATE TABLE users (
     password varchar(255) not null,
     created_at timestamp default current_timestamp
 );
+
+-- +migrate Down
+DROP TABLE users;

@@ -5,9 +5,6 @@ import (
 	"GoGameApp/pkg/password"
 	"GoGameApp/pkg/phonenumber"
 	"fmt"
-	"time"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type Repository interface {
@@ -17,13 +14,18 @@ type Repository interface {
 	GetUserByID(userID uint) (entity.User, error)
 }
 
-type Service struct {
-	repo    Repository
-	signKey string
+type AuthGenerator interface {
+	CreateAccessToken(user entity.User) (string, error)
+	CreateRefreshToken(user entity.User) (string, error)
 }
 
-func New(repo Repository, signKey string) Service {
-	return Service{repo: repo, signKey: signKey}
+type Service struct {
+	repo Repository
+	auth AuthGenerator
+}
+
+func New(repo Repository, authGenerator AuthGenerator) Service {
+	return Service{repo: repo, auth: authGenerator}
 }
 
 type RegisterRequest struct {
@@ -95,7 +97,8 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	AccessToken string `json:"access_token"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func (s Service) Login(req LoginRequest) (LoginResponse, error) {
@@ -115,12 +118,17 @@ func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 	}
 
 	// jwt create token
-	token, err := createToken(user.ID, s.signKey)
+	accessToken, err := s.auth.CreateAccessToken(user)
 	if err != nil {
 		return LoginResponse{}, fmt.Errorf("unexpected error: %w", err)
 	}
 
-	return LoginResponse{AccessToken: token}, nil
+	refreshToken, err := s.auth.CreateRefreshToken(user)
+	if err != nil {
+		return LoginResponse{}, fmt.Errorf("unexpected error: %w", err)
+	}
+
+	return LoginResponse{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
 type ProfileRequest struct {
@@ -141,24 +149,4 @@ func (s Service) Profile(req ProfileRequest) (ProfileResponse, error) {
 	}
 
 	return ProfileResponse{Name: user.Name}, nil
-}
-
-type Claims struct {
-	jwt.RegisteredClaims
-	UserID uint
-}
-
-func createToken(userID uint, signKey string) (string, error) {
-	claims := &Claims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
-		},
-		UserID: userID,
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	return token.SignedString([]byte(signKey))
 }

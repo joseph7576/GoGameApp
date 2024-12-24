@@ -2,15 +2,21 @@ package main
 
 import (
 	"GoGameApp/repository/mysql"
+	"GoGameApp/service/authservice"
 	"GoGameApp/service/userservice"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 const (
-	JWTSignKey = "very_secret_key"
+	JWTSignKey                 = "very_secret_key"
+	AccessTokenSubject         = "at"
+	RefreshTokenSubject        = "rt"
+	AccessTokenExpireDuration  = time.Hour * 24
+	RefreshTokenExpireDuration = time.Hour * 24 * 7
 )
 
 func main() {
@@ -49,8 +55,11 @@ func userRegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	authSvc := authservice.New(JWTSignKey, AccessTokenSubject, RefreshTokenSubject,
+		AccessTokenExpireDuration, RefreshTokenExpireDuration)
+
 	mysqlRepo := mysql.New()
-	userSvc := userservice.New(mysqlRepo, JWTSignKey)
+	userSvc := userservice.New(mysqlRepo, authSvc)
 
 	_, err = userSvc.Register(req)
 	if err != nil {
@@ -86,8 +95,11 @@ func userLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	authSvc := authservice.New(JWTSignKey, AccessTokenSubject, RefreshTokenSubject,
+		AccessTokenExpireDuration, RefreshTokenExpireDuration)
+
 	mysqlRepo := mysql.New()
-	userSvc := userservice.New(mysqlRepo, JWTSignKey)
+	userSvc := userservice.New(mysqlRepo, authSvc)
 
 	resp, err := userSvc.Login(req)
 	if err != nil {
@@ -111,9 +123,20 @@ func userProfileHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{ "error": "invalid method"}`)
 	}
 
-	req := userservice.ProfileRequest{UserID: 0}
+	authSvc := authservice.New(JWTSignKey, AccessTokenSubject, RefreshTokenSubject,
+		AccessTokenExpireDuration, RefreshTokenExpireDuration)
+
+	jwtToken := r.Header.Get("Authorization")
+	claims, err := authSvc.ParseToken(jwtToken)
+	if err != nil {
+		fmt.Fprintf(w, `{"error": "invalid access token"}`)
+
+		return
+	}
+
+	req := userservice.ProfileRequest{UserID: claims.UserID}
 	mysqlRepo := mysql.New()
-	userSvc := userservice.New(mysqlRepo, JWTSignKey)
+	userSvc := userservice.New(mysqlRepo, authSvc)
 
 	resp, err := userSvc.Profile(req)
 	if err != nil {

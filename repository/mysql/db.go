@@ -9,18 +9,29 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-type MySQLDB struct {
-	db *sql.DB
+type Config struct {
+	User                 string
+	Passwd               string
+	Net                  string
+	Addr                 string
+	DBName               string
+	AllowNativePasswords bool
 }
 
-func New() *MySQLDB {
+type MySQLDB struct {
+	config Config
+	db     *sql.DB
+}
+
+func New(config Config) *MySQLDB {
+
 	cfg := mysql.Config{
-		User:                 "root",
-		Passwd:               "root",
-		Net:                  "tcp",
-		Addr:                 "localhost:3306",
-		DBName:               "gameapp_local",
-		AllowNativePasswords: true,
+		User:                 config.User,
+		Passwd:               config.Passwd,
+		Net:                  config.Net,
+		Addr:                 config.Addr,
+		DBName:               config.DBName,
+		AllowNativePasswords: config.AllowNativePasswords,
 	}
 
 	db, err := sql.Open("mysql", cfg.FormatDSN())
@@ -33,5 +44,5 @@ func New() *MySQLDB {
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(10)
 
-	return &MySQLDB{db: db}
+	return &MySQLDB{config: config, db: db}
 }

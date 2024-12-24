@@ -35,7 +35,9 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
-	User entity.User
+	ID          uint   `json:"id"`
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phone_number"`
 }
 
 func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
@@ -87,7 +89,9 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 
 	// return created user
 	return RegisterResponse{
-		User: createdUser,
+		ID:          createdUser.ID,
+		Name:        createdUser.Name,
+		PhoneNumber: createdUser.PhoneNumber,
 	}, nil
 }
 

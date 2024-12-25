@@ -8,4 +8,6 @@ const (
 	ErrMsgCantExecCommand      = "can't execute command"
 	ErrMsgInvalidPhoneNumber   = "invalid phone number"
 	ErrMsgPhoneNumberNotUnique = "phone number is not unique"
+	ErrMsgNameLengthTooShort   = "name length must be greater thatn 3"
+	ErrMsgInvalidInput         = "invalid input"
 )

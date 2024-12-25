@@ -1,16 +1,14 @@
 package userservice
 
 import (
+	"GoGameApp/dto"
 	"GoGameApp/entity"
-	"GoGameApp/pkg/errmsg"
 	"GoGameApp/pkg/password"
-	"GoGameApp/pkg/phonenumber"
 	"GoGameApp/pkg/richerror"
 	"fmt"
 )
 
 type Repository interface {
-	IsPhoneNumberUnique(phoneNumber string) (bool, error)
 	CreateUser(u entity.User) (entity.User, error)
 	GetUserByPhoneNumber(phoneNumber string) (entity.User, bool, error)
 	GetUserByID(userID uint) (entity.User, error)
@@ -30,52 +28,12 @@ func New(repo Repository, authGenerator AuthGenerator) Service {
 	return Service{repo: repo, auth: authGenerator}
 }
 
-type RegisterRequest struct {
-	Name        string `json:"name"`
-	PhoneNumber string `json:"phone_number"`
-	Password    string `json:"password"`
-}
-
-type RegisterResponse struct {
-	User UserInfo `json:"user"`
-}
-
-func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
+func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error) {
 	const op = "userservice.Register"
-
-	//TODO: verify phone number
-	// validate phone number
-	if !phonenumber.IsValid(req.PhoneNumber) {
-		return RegisterResponse{}, richerror.New(op).WithKind(richerror.KindBadRequest).
-			WithMessage(errmsg.ErrMsgInvalidPhoneNumber).WithMeta(map[string]any{"request": req})
-	}
-
-	// check uniqueness of phone number
-	if isUnique, err := s.repo.IsPhoneNumberUnique(req.PhoneNumber); err != nil || !isUnique {
-		if err != nil {
-			return RegisterResponse{}, richerror.New(op).WithErr(err).
-				WithMeta(map[string]any{"request": req})
-		}
-
-		if !isUnique {
-			return RegisterResponse{}, richerror.New(op).WithMessage(errmsg.ErrMsgPhoneNumberNotUnique).
-				WithKind(richerror.KindBadRequest).WithMeta(map[string]any{"request": req})
-		}
-	}
-
-	// validate name
-	if len(req.Name) < 3 {
-		return RegisterResponse{}, fmt.Errorf("name length should be greater than 3")
-	}
-
-	// validate password
-	if len(req.Password) < 8 {
-		return RegisterResponse{}, fmt.Errorf("password length should be greater than 8")
-	}
 
 	hashedPassword, err := password.HashPassword(req.Password)
 	if err != nil {
-		return RegisterResponse{}, fmt.Errorf("can't hash password -> %w", err)
+		return dto.RegisterResponse{}, fmt.Errorf("can't hash password -> %w", err)
 	}
 
 	// create new user in storage
@@ -88,13 +46,13 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 
 	createdUser, err := s.repo.CreateUser(user)
 	if err != nil {
-		return RegisterResponse{}, richerror.New(op).WithErr(err).
+		return dto.RegisterResponse{}, richerror.New(op).WithErr(err).
 			WithMeta(map[string]any{"request": req, "created_user": createdUser})
 	}
 
 	// return created user
-	return RegisterResponse{
-		User: UserInfo{
+	return dto.RegisterResponse{
+		User: dto.UserInfo{
 			ID:          createdUser.ID,
 			Name:        createdUser.Name,
 			PhoneNumber: createdUser.PhoneNumber,
@@ -107,20 +65,14 @@ type LoginRequest struct {
 	Password    string `json:"password"`
 }
 
-type UserInfo struct {
-	ID          uint   `json:"id"`
-	Name        string `json:"name"`
-	PhoneNumber string `json:"phone_number"`
-}
-
 type Tokens struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
 type LoginResponse struct {
-	Tokens Tokens   `json:"tokens"`
-	User   UserInfo `json:"user"`
+	Tokens Tokens       `json:"tokens"`
+	User   dto.UserInfo `json:"user"`
 }
 
 func (s Service) Login(req LoginRequest) (LoginResponse, error) {
@@ -157,7 +109,7 @@ func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 		Tokens: Tokens{
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken},
-		User: UserInfo{
+		User: dto.UserInfo{
 			ID:          user.ID,
 			Name:        user.Name,
 			PhoneNumber: user.PhoneNumber},
@@ -169,7 +121,7 @@ type ProfileRequest struct {
 }
 
 type ProfileResponse struct {
-	User UserInfo `json:"user"`
+	User dto.UserInfo `json:"user"`
 }
 
 func (s Service) Profile(req ProfileRequest) (ProfileResponse, error) {
@@ -181,7 +133,7 @@ func (s Service) Profile(req ProfileRequest) (ProfileResponse, error) {
 			WithMeta(map[string]any{"request": req})
 	}
 
-	return ProfileResponse{User: UserInfo{
+	return ProfileResponse{User: dto.UserInfo{
 		ID:          user.ID,
 		Name:        user.Name,
 		PhoneNumber: user.PhoneNumber,

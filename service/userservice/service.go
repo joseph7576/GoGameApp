@@ -2,8 +2,10 @@ package userservice
 
 import (
 	"GoGameApp/entity"
+	"GoGameApp/pkg/errmsg"
 	"GoGameApp/pkg/password"
 	"GoGameApp/pkg/phonenumber"
+	"GoGameApp/pkg/richerror"
 	"fmt"
 )
 
@@ -39,21 +41,25 @@ type RegisterResponse struct {
 }
 
 func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
-	//TODO: verify phone number
+	const op = "userservice.Register"
 
+	//TODO: verify phone number
 	// validate phone number
 	if !phonenumber.IsValid(req.PhoneNumber) {
-		return RegisterResponse{}, fmt.Errorf("phone number is not valid")
+		return RegisterResponse{}, richerror.New(op).WithKind(richerror.KindBadRequest).
+			WithMessage(errmsg.ErrMsgInvalidPhoneNumber).WithMeta(map[string]any{"request": req})
 	}
 
 	// check uniqueness of phone number
 	if isUnique, err := s.repo.IsPhoneNumberUnique(req.PhoneNumber); err != nil || !isUnique {
 		if err != nil {
-			return RegisterResponse{}, fmt.Errorf("unexpected error: %w", err)
+			return RegisterResponse{}, richerror.New(op).WithErr(err).
+				WithMeta(map[string]any{"request": req})
 		}
 
 		if !isUnique {
-			return RegisterResponse{}, fmt.Errorf("phone number is not unique")
+			return RegisterResponse{}, richerror.New(op).WithMessage(errmsg.ErrMsgPhoneNumberNotUnique).
+				WithKind(richerror.KindBadRequest).WithMeta(map[string]any{"request": req})
 		}
 	}
 
@@ -82,7 +88,8 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 
 	createdUser, err := s.repo.CreateUser(user)
 	if err != nil {
-		return RegisterResponse{}, fmt.Errorf("unexpected error: %w", err)
+		return RegisterResponse{}, richerror.New(op).WithErr(err).
+			WithMeta(map[string]any{"request": req, "created_user": createdUser})
 	}
 
 	// return created user
@@ -117,10 +124,13 @@ type LoginResponse struct {
 }
 
 func (s Service) Login(req LoginRequest) (LoginResponse, error) {
+	const op = "userservice.Login"
+
 	//TODO: separate existence and get user by phone number method
 	user, exist, err := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
 	if err != nil {
-		return LoginResponse{}, fmt.Errorf("unexpected error: %w", err)
+		return LoginResponse{}, richerror.New(op).WithErr(err).
+			WithMeta(map[string]any{"phone_number": req.PhoneNumber})
 	}
 
 	if !exist {
@@ -162,13 +172,13 @@ type ProfileResponse struct {
 	User UserInfo `json:"user"`
 }
 
-// all request inputs for interactor/service should be sanitized.
 func (s Service) Profile(req ProfileRequest) (ProfileResponse, error) {
+	const op = "userservice.Profile"
+
 	user, err := s.repo.GetUserByID(req.UserID)
 	if err != nil {
-		// it should be sanitized ( the repo should have error for user id not found )
-		//TODO: we should use richerror
-		return ProfileResponse{}, fmt.Errorf("unexpected error: %w", err)
+		return ProfileResponse{}, richerror.New(op).WithErr(err).
+			WithMeta(map[string]any{"request": req})
 	}
 
 	return ProfileResponse{User: UserInfo{

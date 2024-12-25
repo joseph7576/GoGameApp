@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"GoGameApp/pkg/httpmsg"
 	"GoGameApp/service/userservice"
 	"net/http"
 
@@ -15,7 +16,8 @@ func (s Server) userRegister(c echo.Context) error {
 
 	resp, err := s.userSvc.Register(req)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		msg, code := httpmsg.Error(err)
+		return echo.NewHTTPError(code, msg)
 	}
 
 	return c.JSON(http.StatusCreated, resp)
@@ -29,7 +31,8 @@ func (s Server) userLogin(c echo.Context) error {
 
 	resp, err := s.userSvc.Login(req)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		msg, code := httpmsg.Error(err)
+		return echo.NewHTTPError(code, msg)
 	}
 
 	return c.JSON(http.StatusOK, resp)
@@ -45,7 +48,8 @@ func (s Server) userProfile(c echo.Context) error {
 	req := userservice.ProfileRequest{UserID: claims.UserID}
 	resp, err := s.userSvc.Profile(req)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		msg, code := httpmsg.Error(err)
+		return echo.NewHTTPError(code, msg)
 	}
 
 	return c.JSON(http.StatusOK, resp)

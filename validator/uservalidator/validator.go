@@ -24,7 +24,7 @@ func New(repo Repository) Validator {
 	}
 }
 
-func (v Validator) ValidateRegisterRequest(req dto.RegisterRequest) (error, map[string]string) {
+func (v Validator) ValidateRegisterRequest(req dto.RegisterRequest) (map[string]string, error) {
 	const op = "uservalidator.ValidateRegisterRequest"
 
 	//TODO: config the params for validation
@@ -46,8 +46,8 @@ func (v Validator) ValidateRegisterRequest(req dto.RegisterRequest) (error, map[
 			}
 		}
 
-		return richerror.New(op).WithKind(richerror.KindBadRequest).
-			WithMessage(errmsg.ErrMsgInvalidInput).WithMeta(map[string]any{"request": req}), fieldErrors
+		return fieldErrors, richerror.New(op).WithKind(richerror.KindBadRequest).
+			WithMessage(errmsg.ErrMsgInvalidInput).WithMeta(map[string]any{"request": req})
 	}
 
 	return nil, nil

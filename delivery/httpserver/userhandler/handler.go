@@ -1,7 +1,7 @@
 package userhandler
 
 import (
-	"GoGameApp/dto"
+	"GoGameApp/param"
 	"GoGameApp/pkg/httpmsg"
 	"GoGameApp/service/authservice"
 	"GoGameApp/service/userservice"
@@ -26,7 +26,7 @@ func New(authSvc authservice.Service, userSvc userservice.Service, userValidator
 }
 
 func (h Handler) userRegister(c echo.Context) error {
-	var req dto.RegisterRequest
+	var req param.RegisterRequest
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -49,7 +49,7 @@ func (h Handler) userRegister(c echo.Context) error {
 }
 
 func (h Handler) userLogin(c echo.Context) error {
-	var req dto.LoginRequest
+	var req param.LoginRequest
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -78,7 +78,7 @@ func (h Handler) userProfile(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
 	}
 
-	req := dto.ProfileRequest{UserID: claims.UserID}
+	req := param.ProfileRequest{UserID: claims.UserID}
 	resp, err := h.userSvc.Profile(req)
 	if err != nil {
 		msg, code := httpmsg.Error(err)

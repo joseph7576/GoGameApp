@@ -1,8 +1,8 @@
 package uservalidator
 
 import (
-	"GoGameApp/dto"
 	"GoGameApp/entity"
+	"GoGameApp/param"
 	"GoGameApp/pkg/errmsg"
 	"GoGameApp/pkg/richerror"
 	"fmt"
@@ -30,7 +30,7 @@ func New(repo Repository) Validator {
 	}
 }
 
-func (v Validator) ValidateRegisterRequest(req dto.RegisterRequest) (map[string]string, error) {
+func (v Validator) ValidateRegisterRequest(req param.RegisterRequest) (map[string]string, error) {
 	const op = "uservalidator.ValidateRegisterRequest"
 
 	//TODO: config the params for validation
@@ -77,7 +77,7 @@ func (v Validator) checkPhoneNumberUniqueness(value any) error {
 	return nil
 }
 
-func (v Validator) ValidateLoginRequest(req dto.LoginRequest) (map[string]string, error) {
+func (v Validator) ValidateLoginRequest(req param.LoginRequest) (map[string]string, error) {
 	const op = "uservalidator.ValidateLoginRequest"
 
 	if err := validation.ValidateStruct(&req,

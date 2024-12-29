@@ -1,8 +1,8 @@
 package userservice
 
 import (
-	"GoGameApp/dto"
 	"GoGameApp/entity"
+	"GoGameApp/param"
 	"GoGameApp/pkg/password"
 	"GoGameApp/pkg/richerror"
 	"fmt"
@@ -30,12 +30,12 @@ func New(repo Repository, authGenerator AuthGenerator) Service {
 }
 
 // --- service business logic part
-func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error) {
+func (s Service) Register(req param.RegisterRequest) (param.RegisterResponse, error) {
 	const op = "userservice.Register"
 
 	hashedPassword, err := password.HashPassword(req.Password)
 	if err != nil {
-		return dto.RegisterResponse{}, fmt.Errorf("can't hash password -> %w", err)
+		return param.RegisterResponse{}, fmt.Errorf("can't hash password -> %w", err)
 	}
 
 	// create new user in storage
@@ -48,13 +48,13 @@ func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error)
 
 	createdUser, err := s.repo.CreateUser(user)
 	if err != nil {
-		return dto.RegisterResponse{}, richerror.New(op).WithErr(err).
+		return param.RegisterResponse{}, richerror.New(op).WithErr(err).
 			WithMeta(map[string]any{"request": req, "created_user": createdUser})
 	}
 
 	// return created user
-	return dto.RegisterResponse{
-		User: dto.UserInfo{
+	return param.RegisterResponse{
+		User: param.UserInfo{
 			ID:          createdUser.ID,
 			Name:        createdUser.Name,
 			PhoneNumber: createdUser.PhoneNumber,
@@ -62,52 +62,52 @@ func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error)
 	}, nil
 }
 
-func (s Service) Login(req dto.LoginRequest) (dto.LoginResponse, error) {
+func (s Service) Login(req param.LoginRequest) (param.LoginResponse, error) {
 	const op = "userservice.Login"
 
 	user, err := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
 	if err != nil {
-		return dto.LoginResponse{}, richerror.New(op).WithErr(err).
+		return param.LoginResponse{}, richerror.New(op).WithErr(err).
 			WithMeta(map[string]any{"phone_number": req.PhoneNumber})
 	}
 
 	if !password.VerifyPassword(user.Password, req.Password) {
-		return dto.LoginResponse{}, fmt.Errorf("invalid credentials")
+		return param.LoginResponse{}, fmt.Errorf("invalid credentials")
 
 	}
 
 	// jwt create token
 	accessToken, err := s.auth.CreateAccessToken(user)
 	if err != nil {
-		return dto.LoginResponse{}, fmt.Errorf("unexpected error: %w", err)
+		return param.LoginResponse{}, fmt.Errorf("unexpected error: %w", err)
 	}
 
 	refreshToken, err := s.auth.CreateRefreshToken(user)
 	if err != nil {
-		return dto.LoginResponse{}, fmt.Errorf("unexpected error: %w", err)
+		return param.LoginResponse{}, fmt.Errorf("unexpected error: %w", err)
 	}
 
-	return dto.LoginResponse{
-		Tokens: dto.Tokens{
+	return param.LoginResponse{
+		Tokens: param.Tokens{
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken},
-		User: dto.UserInfo{
+		User: param.UserInfo{
 			ID:          user.ID,
 			Name:        user.Name,
 			PhoneNumber: user.PhoneNumber},
 	}, nil
 }
 
-func (s Service) Profile(req dto.ProfileRequest) (dto.ProfileResponse, error) {
+func (s Service) Profile(req param.ProfileRequest) (param.ProfileResponse, error) {
 	const op = "userservice.Profile"
 
 	user, err := s.repo.GetUserByID(req.UserID)
 	if err != nil {
-		return dto.ProfileResponse{}, richerror.New(op).WithErr(err).
+		return param.ProfileResponse{}, richerror.New(op).WithErr(err).
 			WithMeta(map[string]any{"request": req})
 	}
 
-	return dto.ProfileResponse{User: dto.UserInfo{
+	return param.ProfileResponse{User: param.UserInfo{
 		ID:          user.ID,
 		Name:        user.Name,
 		PhoneNumber: user.PhoneNumber,

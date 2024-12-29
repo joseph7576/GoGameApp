@@ -10,12 +10,12 @@ import (
 )
 
 type Config struct {
-	User                 string
-	Passwd               string
-	Net                  string
-	Addr                 string
-	DBName               string
-	AllowNativePasswords bool
+	User                 string `koanf:"username"`
+	Passwd               string `koanf:"password"`
+	Net                  string `koanf:"net"`
+	Addr                 string `koanf:"address"`
+	DBName               string `koanf:"db_name"`
+	AllowNativePasswords bool   `koanf:"allow_native_password"`
 }
 
 type MySQLDB struct {

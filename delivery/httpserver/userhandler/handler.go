@@ -1,8 +1,8 @@
 package userhandler
 
 import (
+	"GoGameApp/config"
 	"GoGameApp/param"
-	"GoGameApp/pkg/constant"
 	"GoGameApp/pkg/httpmsg"
 	"GoGameApp/service/authservice"
 	"GoGameApp/service/userservice"
@@ -89,5 +89,5 @@ func (h Handler) userProfile(c echo.Context) error {
 }
 
 func getClaims(c echo.Context) *authservice.Claims {
-	return c.Get(constant.AuthMiddlewareContextKey).(*authservice.Claims)
+	return c.Get(config.AuthMiddlewareContextKey).(*authservice.Claims)
 }

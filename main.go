@@ -7,6 +7,7 @@ import (
 	"GoGameApp/service/authservice"
 	"GoGameApp/service/userservice"
 	"GoGameApp/validator/uservalidator"
+	"fmt"
 	"time"
 )
 
@@ -19,6 +20,12 @@ const (
 )
 
 func main() {
+	//? notes about reading conifgs
+	// 1. load default
+	// 2. read file and merge (overwrite)
+	// 3. get env and merge (overwrite) -> higher priority
+	conf := config.Load("config.yml")
+	fmt.Printf("conf: %+v\n", conf)
 
 	cfg := config.Config{
 		HTTPServer: config.HTTPServer{Port: 8080},

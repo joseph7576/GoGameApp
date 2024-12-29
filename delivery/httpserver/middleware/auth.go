@@ -1,16 +1,16 @@
 package middleware
 
 import (
-	"GoGameApp/pkg/constant"
+	cfg "GoGameApp/config"
 	"GoGameApp/service/authservice"
 
-	echojwt "github.com/labstack/echo-jwt"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 )
 
 func Auth(service authservice.Service, config authservice.Config) echo.MiddlewareFunc {
 	return echojwt.WithConfig(echojwt.Config{
-		ContextKey: constant.AuthMiddlewareContextKey,
+		ContextKey: cfg.AuthMiddlewareContextKey,
 		SigningKey: []byte(config.SignKey),
 		ParseTokenFunc: func(c echo.Context, auth string) (interface{}, error) {
 			claims, err := service.ParseToken(auth)

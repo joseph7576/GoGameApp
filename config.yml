@@ -1,0 +1,10 @@
+---
+type: yml
+auth:
+  sign_key: ma_ma_miaa
+
+mysql:
+  net: tcp
+  address: localhost:3306
+  db_name: gameapp_local
+  allow_native_password: true

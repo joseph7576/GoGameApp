@@ -2,6 +2,7 @@ package userhandler
 
 import (
 	"GoGameApp/param"
+	"GoGameApp/pkg/constant"
 	"GoGameApp/pkg/httpmsg"
 	"GoGameApp/service/authservice"
 	"GoGameApp/service/userservice"
@@ -12,13 +13,16 @@ import (
 )
 
 type Handler struct {
+	authConfig    authservice.Config
 	authSvc       authservice.Service
 	userSvc       userservice.Service
 	userValidator uservalidator.Validator
 }
 
-func New(authSvc authservice.Service, userSvc userservice.Service, userValidator uservalidator.Validator) Handler {
+func New(authSvc authservice.Service, userSvc userservice.Service,
+	userValidator uservalidator.Validator, authConfig authservice.Config) Handler {
 	return Handler{
+		authConfig:    authConfig,
 		authSvc:       authSvc,
 		userSvc:       userSvc,
 		userValidator: userValidator,
@@ -72,11 +76,7 @@ func (h Handler) userLogin(c echo.Context) error {
 }
 
 func (h Handler) userProfile(c echo.Context) error {
-	jwtToken := c.Request().Header.Get("Authorization")
-	claims, err := h.authSvc.ParseToken(jwtToken)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
-	}
+	claims := getClaims(c)
 
 	req := param.ProfileRequest{UserID: claims.UserID}
 	resp, err := h.userSvc.Profile(req)
@@ -86,4 +86,8 @@ func (h Handler) userProfile(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, resp)
+}
+
+func getClaims(c echo.Context) *authservice.Claims {
+	return c.Get(constant.AuthMiddlewareContextKey).(*authservice.Claims)
 }

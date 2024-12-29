@@ -8,11 +8,10 @@ import (
 	"fmt"
 )
 
-
-//--- serivce defining part
+// --- serivce defining part
 type Repository interface {
 	CreateUser(u entity.User) (entity.User, error)
-	GetUserByPhoneNumber(phoneNumber string) (entity.User, bool, error)
+	GetUserByPhoneNumber(phoneNumber string) (entity.User, error)
 	GetUserByID(userID uint) (entity.User, error)
 }
 
@@ -30,8 +29,7 @@ func New(repo Repository, authGenerator AuthGenerator) Service {
 	return Service{repo: repo, auth: authGenerator}
 }
 
-
-//--- service business logic part
+// --- service business logic part
 func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error) {
 	const op = "userservice.Register"
 
@@ -64,19 +62,13 @@ func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error)
 	}, nil
 }
 
-
 func (s Service) Login(req dto.LoginRequest) (dto.LoginResponse, error) {
 	const op = "userservice.Login"
 
-	//TODO: separate existence and get user by phone number method
-	user, exist, err := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
+	user, err := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
 	if err != nil {
 		return dto.LoginResponse{}, richerror.New(op).WithErr(err).
 			WithMeta(map[string]any{"phone_number": req.PhoneNumber})
-	}
-
-	if !exist {
-		return dto.LoginResponse{}, fmt.Errorf("invalid credentials")
 	}
 
 	if !password.VerifyPassword(user.Password, req.Password) {
@@ -105,8 +97,6 @@ func (s Service) Login(req dto.LoginRequest) (dto.LoginResponse, error) {
 			PhoneNumber: user.PhoneNumber},
 	}, nil
 }
-
-
 
 func (s Service) Profile(req dto.ProfileRequest) (dto.ProfileResponse, error) {
 	const op = "userservice.Profile"

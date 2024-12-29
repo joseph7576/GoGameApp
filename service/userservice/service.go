@@ -8,6 +8,8 @@ import (
 	"fmt"
 )
 
+
+//--- serivce defining part
 type Repository interface {
 	CreateUser(u entity.User) (entity.User, error)
 	GetUserByPhoneNumber(phoneNumber string) (entity.User, bool, error)
@@ -28,6 +30,8 @@ func New(repo Repository, authGenerator AuthGenerator) Service {
 	return Service{repo: repo, auth: authGenerator}
 }
 
+
+//--- service business logic part
 func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error) {
 	const op = "userservice.Register"
 
@@ -60,53 +64,39 @@ func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error)
 	}, nil
 }
 
-type LoginRequest struct {
-	PhoneNumber string `json:"phone_number"`
-	Password    string `json:"password"`
-}
 
-type Tokens struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-}
-
-type LoginResponse struct {
-	Tokens Tokens       `json:"tokens"`
-	User   dto.UserInfo `json:"user"`
-}
-
-func (s Service) Login(req LoginRequest) (LoginResponse, error) {
+func (s Service) Login(req dto.LoginRequest) (dto.LoginResponse, error) {
 	const op = "userservice.Login"
 
 	//TODO: separate existence and get user by phone number method
 	user, exist, err := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
 	if err != nil {
-		return LoginResponse{}, richerror.New(op).WithErr(err).
+		return dto.LoginResponse{}, richerror.New(op).WithErr(err).
 			WithMeta(map[string]any{"phone_number": req.PhoneNumber})
 	}
 
 	if !exist {
-		return LoginResponse{}, fmt.Errorf("invalid credentials")
+		return dto.LoginResponse{}, fmt.Errorf("invalid credentials")
 	}
 
 	if !password.VerifyPassword(user.Password, req.Password) {
-		return LoginResponse{}, fmt.Errorf("invalid credentials")
+		return dto.LoginResponse{}, fmt.Errorf("invalid credentials")
 
 	}
 
 	// jwt create token
 	accessToken, err := s.auth.CreateAccessToken(user)
 	if err != nil {
-		return LoginResponse{}, fmt.Errorf("unexpected error: %w", err)
+		return dto.LoginResponse{}, fmt.Errorf("unexpected error: %w", err)
 	}
 
 	refreshToken, err := s.auth.CreateRefreshToken(user)
 	if err != nil {
-		return LoginResponse{}, fmt.Errorf("unexpected error: %w", err)
+		return dto.LoginResponse{}, fmt.Errorf("unexpected error: %w", err)
 	}
 
-	return LoginResponse{
-		Tokens: Tokens{
+	return dto.LoginResponse{
+		Tokens: dto.Tokens{
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken},
 		User: dto.UserInfo{
@@ -116,24 +106,18 @@ func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 	}, nil
 }
 
-type ProfileRequest struct {
-	UserID uint
-}
 
-type ProfileResponse struct {
-	User dto.UserInfo `json:"user"`
-}
 
-func (s Service) Profile(req ProfileRequest) (ProfileResponse, error) {
+func (s Service) Profile(req dto.ProfileRequest) (dto.ProfileResponse, error) {
 	const op = "userservice.Profile"
 
 	user, err := s.repo.GetUserByID(req.UserID)
 	if err != nil {
-		return ProfileResponse{}, richerror.New(op).WithErr(err).
+		return dto.ProfileResponse{}, richerror.New(op).WithErr(err).
 			WithMeta(map[string]any{"request": req})
 	}
 
-	return ProfileResponse{User: dto.UserInfo{
+	return dto.ProfileResponse{User: dto.UserInfo{
 		ID:          user.ID,
 		Name:        user.Name,
 		PhoneNumber: user.PhoneNumber,

@@ -3,6 +3,7 @@ package main
 import (
 	"GoGameApp/config"
 	"GoGameApp/delivery/httpserver"
+	"GoGameApp/repository/migrator"
 	"GoGameApp/repository/mysql"
 	"GoGameApp/service/authservice"
 	"GoGameApp/service/userservice"
@@ -27,6 +28,7 @@ func main() {
 	conf := config.Load("config.yml")
 	fmt.Printf("conf: %+v\n", conf)
 
+	//TODO: merge conf with cfg
 	cfg := config.Config{
 		HTTPServer: config.HTTPServer{Port: 8080},
 		Auth: authservice.Config{
@@ -47,8 +49,8 @@ func main() {
 	}
 
 	//TODO: add command for migrations
-	// migrator := migrator.New(cfg.Mysql)
-	// migrator.Up()
+	migrator := migrator.New(cfg.Mysql)
+	migrator.Up()
 
 	authSvc, userSvc, userValidator := setupServices(cfg)
 	server := httpserver.New(cfg, authSvc, userSvc, userValidator)

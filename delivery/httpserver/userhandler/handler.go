@@ -1,8 +1,8 @@
 package userhandler
 
 import (
-	"GoGameApp/config"
 	"GoGameApp/param"
+	"GoGameApp/pkg/claim"
 	"GoGameApp/pkg/httpmsg"
 	"GoGameApp/service/authservice"
 	"GoGameApp/service/userservice"
@@ -76,7 +76,7 @@ func (h Handler) userLogin(c echo.Context) error {
 }
 
 func (h Handler) userProfile(c echo.Context) error {
-	claims := getClaims(c)
+	claims := claim.GetClaimsFromEchoContext(c)
 
 	req := param.ProfileRequest{UserID: claims.UserID}
 	resp, err := h.userSvc.Profile(req)
@@ -86,8 +86,4 @@ func (h Handler) userProfile(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, resp)
-}
-
-func getClaims(c echo.Context) *authservice.Claims {
-	return c.Get(config.AuthMiddlewareContextKey).(*authservice.Claims)
 }

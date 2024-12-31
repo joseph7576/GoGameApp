@@ -2,8 +2,11 @@ package httpserver
 
 import (
 	"GoGameApp/config"
+	"GoGameApp/delivery/httpserver/backofficeuserhandler"
 	"GoGameApp/delivery/httpserver/userhandler"
+	"GoGameApp/service/authorizationservice"
 	"GoGameApp/service/authservice"
+	"GoGameApp/service/backofficeuserservice"
 	"GoGameApp/service/userservice"
 	"GoGameApp/validator/uservalidator"
 	"fmt"
@@ -13,15 +16,19 @@ import (
 )
 
 type Server struct {
-	config      config.Config
-	userHandler userhandler.Handler
+	config                config.Config
+	userHandler           userhandler.Handler
+	backofficeUserHandler backofficeuserhandler.Handler
 }
 
 func New(config config.Config, authSvc authservice.Service,
-	userSvc userservice.Service, userValidator uservalidator.Validator) Server {
+	userSvc userservice.Service, userValidator uservalidator.Validator,
+	backofficeUserSvc backofficeuserservice.Service,
+	authorizationSvc authorizationservice.Service) Server {
 	return Server{
-		config:      config,
-		userHandler: userhandler.New(authSvc, userSvc, userValidator, config.Auth),
+		config:                config,
+		userHandler:           userhandler.New(authSvc, userSvc, userValidator, config.Auth),
+		backofficeUserHandler: backofficeuserhandler.New(authSvc, backofficeUserSvc, authorizationSvc, config.Auth),
 	}
 }
 
@@ -37,6 +44,7 @@ func (s Server) Serve() {
 	e.GET("/health", s.healthCheck)
 
 	s.userHandler.SetUserRoutes(e)
+	s.backofficeUserHandler.SetBackofficeUserRoute(e)
 
 	// Start Server
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", s.config.HTTPServer.Port)))

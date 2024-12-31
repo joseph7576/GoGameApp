@@ -1,6 +1,7 @@
 package authservice
 
 import (
+	"GoGameApp/entity"
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -8,7 +9,8 @@ import (
 
 type Claims struct {
 	jwt.RegisteredClaims
-	UserID uint `json:"user_id"`
+	UserID uint        `json:"user_id"`
+	Role   entity.Role `json:"role"`
 }
 
 func (c Claims) Valid() error {

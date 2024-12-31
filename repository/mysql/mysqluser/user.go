@@ -1,17 +1,18 @@
-package mysql
+package mysqluser
 
 import (
 	"GoGameApp/entity"
 	"GoGameApp/pkg/errmsg"
 	"GoGameApp/pkg/richerror"
+	"GoGameApp/repository/mysql"
 	"database/sql"
 )
 
-func (d *MySQLDB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
+func (d *DB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
 	const op = "mysql.IsPhoneNumberUnique"
 
-	row := d.db.QueryRow(`select * from users where phone_number = ?`, phoneNumber)
-	_, err := scanUser(row)
+	row := d.conn.Conn().QueryRow(`select * from users where phone_number = ?`, phoneNumber)
+	_, err := mysql.ScanUser(row)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return true, nil
@@ -24,10 +25,11 @@ func (d *MySQLDB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
 	return false, nil
 }
 
-func (d *MySQLDB) CreateUser(u entity.User) (entity.User, error) {
+func (d *DB) CreateUser(u entity.User) (entity.User, error) {
 	const op = "mysql.CreateUser"
 
-	res, err := d.db.Exec(`insert into users(name, phone_number, password) values(?, ?, ?)`, u.Name, u.PhoneNumber, u.Password)
+	res, err := d.conn.Conn().Exec(`insert into users(name, phone_number, password, role) values(?, ?, ?, ?)`,
+		u.Name, u.PhoneNumber, u.Password, u.Role.String())
 	if err != nil {
 		return entity.User{}, richerror.New(op).WithErr(err).
 			WithMessage(errmsg.ErrMsgCantExecCommand).WithKind(richerror.KindUnexpected)
@@ -39,15 +41,15 @@ func (d *MySQLDB) CreateUser(u entity.User) (entity.User, error) {
 	return u, nil
 }
 
-func (d *MySQLDB) GetUserByPhoneNumber(phoneNumber string) (entity.User, error) {
+func (d *DB) GetUserByPhoneNumber(phoneNumber string) (entity.User, error) {
 	const op = "mysql.GetUserByPhoneNumber"
 
-	row := d.db.QueryRow(`select * from users where phone_number = ?`, phoneNumber)
-	user, err := scanUser(row)
+	row := d.conn.Conn().QueryRow(`select * from users where phone_number = ?`, phoneNumber)
+	user, err := mysql.ScanUser(row)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return entity.User{}, richerror.New(op).WithErr(err).
-			WithMessage(errmsg.ErrMsgNotFound).WithKind(richerror.KindNotFound)
+				WithMessage(errmsg.ErrMsgNotFound).WithKind(richerror.KindNotFound)
 		}
 
 		//TODO: log the unexpected error
@@ -58,11 +60,11 @@ func (d *MySQLDB) GetUserByPhoneNumber(phoneNumber string) (entity.User, error) 
 	return user, nil
 }
 
-func (d *MySQLDB) GetUserByID(userID uint) (entity.User, error) {
+func (d *DB) GetUserByID(userID uint) (entity.User, error) {
 	const op = "mysql.GetUserByID"
 
-	row := d.db.QueryRow(`select * from users where id = ?`, userID)
-	user, err := scanUser(row)
+	row := d.conn.Conn().QueryRow(`select * from users where id = ?`, userID)
+	user, err := mysql.ScanUser(row)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return entity.User{}, richerror.New(op).WithErr(err).
@@ -74,15 +76,4 @@ func (d *MySQLDB) GetUserByID(userID uint) (entity.User, error) {
 	}
 
 	return user, nil
-}
-
-func scanUser(row *sql.Row) (entity.User, error) {
-	var (
-		createdAt []uint8
-		user      entity.User
-	)
-
-	err := row.Scan(&user.ID, &user.Name, &user.PhoneNumber, &user.Password, &createdAt)
-
-	return user, err
 }

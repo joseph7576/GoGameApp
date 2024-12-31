@@ -3,17 +3,33 @@ package entity
 type Role uint8
 
 const (
-	UserRole = iota + 1
+	UserRole Role = iota + 1
 	AdminRole
+)
+
+const (
+	UseRoleStr   = "user"
+	AdminRoleStr = "admin"
 )
 
 func (r Role) String() string {
 	switch r {
 	case UserRole:
-		return "user"
+		return UseRoleStr
 	case AdminRole:
-		return "admin"
+		return AdminRoleStr
 	default:
-		return "role_not_valid"
+		return ""
+	}
+}
+
+func MapToRoleEntity(role string) Role {
+	switch role {
+	case UseRoleStr:
+		return UserRole
+	case AdminRoleStr:
+		return AdminRole
+	default:
+		return Role(0)
 	}
 }

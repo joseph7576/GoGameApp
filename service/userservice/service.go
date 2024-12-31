@@ -44,6 +44,7 @@ func (s Service) Register(req param.RegisterRequest) (param.RegisterResponse, er
 		PhoneNumber: req.PhoneNumber,
 		Name:        req.Name,
 		Password:    hashedPassword,
+		Role:        entity.UserRole,
 	}
 
 	createdUser, err := s.repo.CreateUser(user)

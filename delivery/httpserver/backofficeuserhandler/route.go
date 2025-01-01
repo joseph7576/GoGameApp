@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (h Handler) SetBackofficeUserRoute(e *echo.Echo) {
+func (h Handler) SetRoutes(e *echo.Echo) {
 	backofficeGroup := e.Group("/backoffice/users")
 
 	backofficeGroup.GET("/", h.listUsers,

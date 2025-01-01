@@ -1,10 +1,25 @@
 ---
 type: yml
+
+http_server:
+  port: 8080 
+
 auth:
-  sign_key: ma_ma_miaa
+  sign_key: very_secret_key_mamamiaa
 
 mysql:
+  username: root
+  password: root
   net: tcp
   address: localhost:3306
   db_name: gameapp_local
   allow_native_password: true
+
+redis:
+  host: localhost
+  port: 6379
+  password: 
+  db: 1
+
+matching_service:
+  waiting_timeout: "2m"

@@ -11,4 +11,5 @@ const (
 	ErrMsgNameLengthTooShort   = "name length must be greater thatn 3"
 	ErrMsgInvalidInput         = "invalid input"
 	ErrMsgUserNotAllowed       = "user not allowed"
+	ErrMsgCategoryNoValid      = "category is not valid"
 )

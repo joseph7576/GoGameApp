@@ -13,6 +13,7 @@ require (
 	github.com/knadh/koanf/v2 v2.1.2
 	github.com/labstack/echo-jwt/v4 v4.3.0
 	github.com/labstack/echo/v4 v4.13.3
+	github.com/redis/go-redis/v9 v9.7.3
 	github.com/rubenv/sql-migrate v1.7.1
 	golang.org/x/crypto v0.31.0
 )
@@ -30,7 +31,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/redis/go-redis/v9 v9.7.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/net v0.33.0 // indirect
